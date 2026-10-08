@@ -1,16 +1,49 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/book_model.dart';
+import '../../providers/cart_provider.dart';
+import '../cart/cart_screen.dart';
 
-class BookDetailsScreen extends StatelessWidget {
+class BookDetailsScreen extends ConsumerWidget {
   final Book book;
   const BookDetailsScreen({super.key, required this.book});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
+    final count = ref.watch(cartCountProvider);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Book Details')),
+      appBar: AppBar(
+        title: const Text('Book Details'),
+        actions: [
+          IconButton(
+            icon: Badge(
+              isLabelVisible: count > 0,
+              label: Text('$count'),
+              child: const Icon(Icons.shopping_cart_outlined),
+            ),
+            onPressed: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const CartScreen())),
+          ),
+        ],
+      ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: ElevatedButton.icon(
+            icon: const Icon(Icons.add_shopping_cart),
+            label: const Text('Add to Cart'),
+            onPressed: () {
+              ref.read(cartProvider.notifier).add(book);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('${book.title} added to cart')),
+              );
+            },
+          ),
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Center(

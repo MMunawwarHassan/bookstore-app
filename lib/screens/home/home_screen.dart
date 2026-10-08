@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/book_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/book_provider.dart';
+import '../../providers/cart_provider.dart';
 import '../../widgets/book_card.dart';
+import '../cart/cart_screen.dart';
 import '../catalog/book_details_screen.dart';
 import '../search/search_screen.dart';
 
@@ -20,11 +22,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final books = ref.watch(booksProvider);
+    final cartCount = ref.watch(cartCountProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Book Store'),
         actions: [
+          IconButton(
+            tooltip: 'Cart',
+            icon: Badge(
+              isLabelVisible: cartCount > 0,
+              label: Text('$cartCount'),
+              child: const Icon(Icons.shopping_cart_outlined),
+            ),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const CartScreen()),
+            ),
+          ),
           IconButton(
             tooltip: 'Search',
             icon: const Icon(Icons.search),
