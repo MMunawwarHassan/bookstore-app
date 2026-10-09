@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/book_model.dart';
 import '../../providers/cart_provider.dart';
+import '../../widgets/review_section.dart';
 import '../cart/cart_screen.dart';
 
 class BookDetailsScreen extends ConsumerWidget {
@@ -98,6 +99,8 @@ class BookDetailsScreen extends ConsumerWidget {
                     style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
                 Text(book.description),
+                const SizedBox(height: 24),
+                ReviewSection(bookId: book.id),
               ],
             ),
           ),

@@ -7,6 +7,7 @@ import '../../providers/cart_provider.dart';
 import '../../widgets/book_card.dart';
 import '../cart/cart_screen.dart';
 import '../catalog/book_details_screen.dart';
+import '../orders/order_history_screen.dart';
 import '../search/search_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -28,6 +29,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       appBar: AppBar(
         title: const Text('Book Store'),
         actions: [
+          IconButton(
+            tooltip: 'My Orders',
+            icon: const Icon(Icons.receipt_long_outlined),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const OrderHistoryScreen()),
+            ),
+          ),
           IconButton(
             tooltip: 'Cart',
             icon: Badge(

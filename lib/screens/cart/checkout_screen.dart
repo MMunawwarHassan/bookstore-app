@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
+import '../../providers/order_provider.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
@@ -13,26 +15,48 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   final _formKey = GlobalKey<FormState>();
   final _address = TextEditingController();
   final _phone = TextEditingController();
+  bool _loading = false;
 
-  void _placeOrder() {
+  Future<void> _placeOrder() async {
     if (!_formKey.currentState!.validate()) return;
-    ref.read(cartProvider.notifier).clear();
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        icon: const Icon(Icons.check_circle, color: Colors.green, size: 56),
-        title: const Text('Order Placed!'),
-        content: const Text('Thank you. Payment: Cash on Delivery.'),
-        actions: [
-          TextButton(
-            onPressed: () =>
-                Navigator.of(context).popUntil((r) => r.isFirst),
-            child: const Text('Back to Home'),
-          ),
-        ],
-      ),
-    );
+    final user = ref.read(authServiceProvider).currentUser;
+    if (user == null) return;
+
+    setState(() => _loading = true);
+    try {
+      await ref.read(orderServiceProvider).placeOrder(
+            userId: user.uid,
+            items: ref.read(cartProvider),
+            total: ref.read(cartTotalProvider),
+            address: _address.text.trim(),
+            phone: _phone.text.trim(),
+          );
+      ref.read(cartProvider.notifier).clear();
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => AlertDialog(
+          icon: const Icon(Icons.check_circle, color: Colors.green, size: 56),
+          title: const Text('Order Placed!'),
+          content: const Text('Thank you. Payment: Cash on Delivery.'),
+          actions: [
+            TextButton(
+              onPressed: () =>
+                  Navigator.of(context).popUntil((r) => r.isFirst),
+              child: const Text('Back to Home'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Order failed: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -74,7 +98,8 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                       const Text('Total',
                           style: TextStyle(fontWeight: FontWeight.bold)),
                       Text('\$${total.toStringAsFixed(2)}',
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                          style:
+                              const TextStyle(fontWeight: FontWeight.bold)),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -110,8 +135,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: items.isEmpty ? null : _placeOrder,
-                    child: const Text('Place Order'),
+                    onPressed: (items.isEmpty || _loading) ? null : _placeOrder,
+                    child: _loading
+                        ? const SizedBox(
+                            height: 22,
+                            width: 22,
+                            child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Text('Place Order'),
                   ),
                 ],
               ),
