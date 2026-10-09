@@ -2,7 +2,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/book_model.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
+import '../../providers/wishlist_provider.dart';
 import '../../widgets/review_section.dart';
 import '../cart/cart_screen.dart';
 
@@ -14,11 +16,26 @@ class BookDetailsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final cs = Theme.of(context).colorScheme;
     final count = ref.watch(cartCountProvider);
+    final ids = ref.watch(wishlistIdsProvider).value ?? <String>{};
+    final inWishlist = ids.contains(book.id);
+    final uid = ref.watch(authServiceProvider).currentUser?.uid;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Book Details'),
         actions: [
+          IconButton(
+            tooltip: inWishlist ? 'Remove from wishlist' : 'Add to wishlist',
+            icon: Icon(
+              inWishlist ? Icons.favorite : Icons.favorite_border,
+              color: inWishlist ? Colors.red : null,
+            ),
+            onPressed: uid == null
+                ? null
+                : () => ref
+                    .read(wishlistServiceProvider)
+                    .toggle(uid, book.id, inWishlist),
+          ),
           IconButton(
             icon: Badge(
               isLabelVisible: count > 0,

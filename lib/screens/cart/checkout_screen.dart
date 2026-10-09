@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../providers/order_provider.dart';
+import '../../providers/user_provider.dart';
 
 class CheckoutScreen extends ConsumerStatefulWidget {
   const CheckoutScreen({super.key});
@@ -16,6 +17,21 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   final _address = TextEditingController();
   final _phone = TextEditingController();
   bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final p = ref.read(userProfileProvider).value;
+    _address.text = p?['address'] ?? '';
+    _phone.text = p?['phone'] ?? '';
+  }
+
+  @override
+  void dispose() {
+    _address.dispose();
+    _phone.dispose();
+    super.dispose();
+  }
 
   Future<void> _placeOrder() async {
     if (!_formKey.currentState!.validate()) return;

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/book_model.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/book_provider.dart';
 import '../../providers/cart_provider.dart';
 import '../../widgets/book_card.dart';
 import '../cart/cart_screen.dart';
 import '../catalog/book_details_screen.dart';
-import '../orders/order_history_screen.dart';
+import '../profile/profile_screen.dart';
 import '../search/search_screen.dart';
+import '../wishlist/wishlist_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -20,6 +20,9 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   String _genre = 'All';
 
+  void _go(Widget screen) =>
+      Navigator.push(context, MaterialPageRoute(builder: (_) => screen));
+
   @override
   Widget build(BuildContext context) {
     final books = ref.watch(booksProvider);
@@ -30,12 +33,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         title: const Text('Book Store'),
         actions: [
           IconButton(
-            tooltip: 'My Orders',
-            icon: const Icon(Icons.receipt_long_outlined),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const OrderHistoryScreen()),
-            ),
+            tooltip: 'Search',
+            icon: const Icon(Icons.search),
+            onPressed: () => _go(const SearchScreen()),
+          ),
+          IconButton(
+            tooltip: 'Wishlist',
+            icon: const Icon(Icons.favorite_border),
+            onPressed: () => _go(const WishlistScreen()),
           ),
           IconButton(
             tooltip: 'Cart',
@@ -44,23 +49,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               label: Text('$cartCount'),
               child: const Icon(Icons.shopping_cart_outlined),
             ),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const CartScreen()),
-            ),
+            onPressed: () => _go(const CartScreen()),
           ),
           IconButton(
-            tooltip: 'Search',
-            icon: const Icon(Icons.search),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SearchScreen()),
-            ),
-          ),
-          IconButton(
-            tooltip: 'Logout',
-            icon: const Icon(Icons.logout),
-            onPressed: () => ref.read(authServiceProvider).logout(),
+            tooltip: 'Profile',
+            icon: const Icon(Icons.person_outline),
+            onPressed: () => _go(const ProfileScreen()),
           ),
         ],
       ),
@@ -145,12 +139,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             separatorBuilder: (_, __) => const SizedBox(width: 14),
             itemBuilder: (_, i) => BookCard(
               book: items[i],
-              onTap: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => BookDetailsScreen(book: items[i]),
-                ),
-              ),
+              onTap: () => _go(BookDetailsScreen(book: items[i])),
             ),
           ),
         ),
