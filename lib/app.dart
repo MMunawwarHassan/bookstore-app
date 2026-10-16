@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'providers/auth_provider.dart';
 import 'screens/auth/login_screen.dart';
-import 'screens/home/home_screen.dart';
+import 'screens/home/main_shell.dart';
 
 class BookStoreApp extends StatelessWidget {
   const BookStoreApp({super.key});
@@ -31,8 +31,8 @@ class AuthGate extends ConsumerWidget {
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, _) => Scaffold(body: Center(child: Text('Error: $e'))),
-      data: (user) =>
-          user == null ? const LoginScreen() : const HomeScreen(),
+            data: (user) =>
+          user == null ? const LoginScreen() : const MainShell(),
     );
   }
 }

@@ -27,7 +27,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: TextField(
-              autofocus: true,
+              autofocus: false,
               onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
               decoration: const InputDecoration(
                 hintText: 'Search by title, author or genre',
