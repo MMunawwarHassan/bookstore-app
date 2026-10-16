@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../providers/admin_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/user_provider.dart';
+import '../admin/admin_dashboard_screen.dart';
 import '../orders/order_history_screen.dart';
 import '../wishlist/wishlist_screen.dart';
 import 'edit_profile_screen.dart';
@@ -13,6 +15,7 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authServiceProvider).currentUser;
     final profile = ref.watch(userProfileProvider).value;
+    final isAdmin = ref.watch(isAdminProvider);
     final cs = Theme.of(context).colorScheme;
 
     final name = profile?['name'] ?? user?.displayName ?? 'User';
@@ -55,6 +58,16 @@ class ProfileScreen extends ConsumerWidget {
             child: Text(user?.email ?? '',
                 style: TextStyle(color: cs.onSurfaceVariant)),
           ),
+          if (isAdmin)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Chip(
+                  avatar: const Icon(Icons.verified_user, size: 16),
+                  label: const Text('ADMIN'),
+                ),
+              ),
+            ),
           const SizedBox(height: 20),
           Card(
             child: Column(
@@ -81,6 +94,14 @@ class ProfileScreen extends ConsumerWidget {
           Card(
             child: Column(
               children: [
+                if (isAdmin)
+                  ListTile(
+                    leading: Icon(Icons.admin_panel_settings_outlined,
+                        color: cs.primary),
+                    title: const Text('Admin panel'),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => go(const AdminDashboardScreen()),
+                  ),
                 ListTile(
                   leading: const Icon(Icons.edit_outlined),
                   title: const Text('Edit profile'),
