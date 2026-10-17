@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/cart_provider.dart';
+import '../../providers/nav_provider.dart';
 import 'checkout_screen.dart';
 
 class CartScreen extends ConsumerWidget {
@@ -10,6 +11,7 @@ class CartScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final items = ref.watch(cartProvider);
     final total = ref.watch(cartTotalProvider);
+    final count = ref.watch(cartCountProvider);
     final cs = Theme.of(context).colorScheme;
 
     return Scaffold(
@@ -19,10 +21,28 @@ class CartScreen extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.shopping_cart_outlined,
-                      size: 72, color: cs.outline),
-                  const SizedBox(height: 12),
-                  const Text('Your cart is empty'),
+                  Container(
+                    padding: const EdgeInsets.all(28),
+                    decoration: BoxDecoration(
+                        color: cs.primaryContainer, shape: BoxShape.circle),
+                    child: Icon(Icons.shopping_bag_outlined,
+                        size: 56, color: cs.onPrimaryContainer),
+                  ),
+                  const SizedBox(height: 20),
+                  Text('Your cart is empty',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleLarge
+                          ?.copyWith(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 6),
+                  Text('Add some books to get started',
+                      style: TextStyle(color: cs.onSurfaceVariant)),
+                  const SizedBox(height: 20),
+                  FilledButton(
+                    onPressed: () =>
+                        ref.read(tabIndexProvider.notifier).set(0),
+                    child: const Text('Browse books'),
+                  ),
                 ],
               ),
             )
@@ -32,41 +52,93 @@ class CartScreen extends ConsumerWidget {
                   child: ListView.separated(
                     padding: const EdgeInsets.all(16),
                     itemCount: items.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (_, i) {
                       final c = items[i];
-                      return Card(
-                        child: ListTile(
-                          leading: ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: Image.network(c.book.coverUrl,
-                                width: 44,
-                                height: 60,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
-                                    const Icon(Icons.book)),
+                      return Dismissible(
+                        key: ValueKey(c.book.id),
+                        direction: DismissDirection.endToStart,
+                        onDismissed: (_) => ref
+                            .read(cartProvider.notifier)
+                            .remove(c.book.id),
+                        background: Container(
+                          alignment: Alignment.centerRight,
+                          padding: const EdgeInsets.only(right: 24),
+                          decoration: BoxDecoration(
+                            color: cs.errorContainer,
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                          title: Text(c.book.title,
-                              maxLines: 1, overflow: TextOverflow.ellipsis),
-                          subtitle: Text(
-                              '\$${c.book.price.toStringAsFixed(2)} x ${c.quantity} = \$${c.total.toStringAsFixed(2)}'),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.remove_circle_outline),
-                                onPressed: () => ref
-                                    .read(cartProvider.notifier)
-                                    .decrease(c.book.id),
-                              ),
-                              Text('${c.quantity}'),
-                              IconButton(
-                                icon: const Icon(Icons.add_circle_outline),
-                                onPressed: () => ref
-                                    .read(cartProvider.notifier)
-                                    .increase(c.book.id),
-                              ),
-                            ],
+                          child: Icon(Icons.delete_outline,
+                              color: cs.onErrorContainer),
+                        ),
+                        child: Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: Image.network(c.book.coverUrl,
+                                      width: 64,
+                                      height: 90,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) =>
+                                          Container(
+                                            width: 64,
+                                            height: 90,
+                                            color:
+                                                cs.surfaceContainerHighest,
+                                            child: const Icon(Icons.book),
+                                          )),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(c.book.title,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                              fontWeight: FontWeight.w600)),
+                                      Text(c.book.author,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                              fontSize: 12,
+                                              color: cs.onSurfaceVariant)),
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        children: [
+                                          Text(
+                                              '\$${c.total.toStringAsFixed(2)}',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: cs.primary)),
+                                          const Spacer(),
+                                          _qtyBtn(Icons.remove, () => ref
+                                              .read(cartProvider.notifier)
+                                              .decrease(c.book.id), cs),
+                                          Padding(
+                                            padding:
+                                                const EdgeInsets.symmetric(
+                                                    horizontal: 10),
+                                            child: Text('${c.quantity}',
+                                                style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold)),
+                                          ),
+                                          _qtyBtn(Icons.add, () => ref
+                                              .read(cartProvider.notifier)
+                                              .increase(c.book.id), cs),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       );
@@ -74,41 +146,57 @@ class CartScreen extends ConsumerWidget {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                   decoration: BoxDecoration(
-                    color: cs.surface,
-                    boxShadow: [
-                      BoxShadow(
-                          color: Colors.black.withOpacity(0.08),
-                          blurRadius: 10)
-                    ],
+                    color: Theme.of(context).scaffoldBackgroundColor,
+                    border: Border(top: BorderSide(color: cs.outlineVariant)),
                   ),
                   child: SafeArea(
                     top: false,
-                    child: Row(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Total'),
-                            Text('\$${total.toStringAsFixed(2)}',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .headlineSmall
-                                    ?.copyWith(
-                                        color: cs.primary,
-                                        fontWeight: FontWeight.bold)),
+                            Text('Items ($count)',
+                                style:
+                                    TextStyle(color: cs.onSurfaceVariant)),
+                            Text('\$${total.toStringAsFixed(2)}'),
                           ],
                         ),
-                        const SizedBox(width: 24),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (_) => const CheckoutScreen())),
-                            child: const Text('Checkout'),
-                          ),
+                        const SizedBox(height: 6),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Shipping',
+                                style:
+                                    TextStyle(color: cs.onSurfaceVariant)),
+                            const Text('Free'),
+                          ],
+                        ),
+                        const Divider(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Total',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16)),
+                            Text('\$${total.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20,
+                                    color: cs.primary)),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        ElevatedButton(
+                          onPressed: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const CheckoutScreen())),
+                          child: const Text('Proceed to Checkout'),
                         ),
                       ],
                     ),
@@ -116,6 +204,21 @@ class CartScreen extends ConsumerWidget {
                 ),
               ],
             ),
+    );
+  }
+
+  Widget _qtyBtn(IconData icon, VoidCallback onTap, ColorScheme cs) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.all(5),
+        decoration: BoxDecoration(
+          color: cs.primaryContainer,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Icon(icon, size: 18, color: cs.onPrimaryContainer),
+      ),
     );
   }
 }
